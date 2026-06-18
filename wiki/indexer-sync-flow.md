@@ -49,6 +49,7 @@ The indexer runs as a background process (`indexerManager.ts`) that initiates pe
 - **Value**: Decoded from XDR base64 based on the event type (e.g., `amount` for `LoanRequested`).
 
 ### 3. Database Schema
+For a complete overview of the tables, including scores, webhooks, and the `loan_events` view, see the [Data Model Architecture Overview](../data-model.md).
 - **indexer_state**: Tracks the current synchronization point (`last_indexed_ledger`, `last_indexed_cursor`).
 - **loan_events**: Stores every decoded event for auditing and history.
 - **scores**: Maintains the current credit score for each user, updated in real-time by the indexer.
