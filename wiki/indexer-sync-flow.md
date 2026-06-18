@@ -2,6 +2,8 @@
 
 This document explains how Remitlend synchronizes on-chain Soroban events with the off-chain PostgreSQL database for fast querying and credit score updates.
 
+> See [Data Model & Postgres Schema](../data-model.md) for a reference of the core tables, indexes, and the contract event mapping used by the indexer.
+
 ## Role of the Event Indexer
 
 The `EventIndexer` service in the backend acts as a bridge. It polls the Stellar RPC node for contract events, decodes them, and stores the relevant data in our local database.
@@ -52,6 +54,8 @@ The indexer runs as a background process (`indexerManager.ts`) that initiates pe
 - **indexer_state**: Tracks the current synchronization point (`last_indexed_ledger`, `last_indexed_cursor`).
 - **loan_events**: Stores every decoded event for auditing and history.
 - **scores**: Maintains the current credit score for each user, updated in real-time by the indexer.
+
+For a complete schema reference with core table definitions, indexes, and contract-event mappings, see [Data Model & Postgres Schema](../data-model.md).
 
 ### 4. Resiliency & Reliability
 - **State Persistence**: The indexer always resumes from the last successfully indexed ledger.
