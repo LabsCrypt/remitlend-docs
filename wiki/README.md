@@ -8,3 +8,4 @@ This folder is a GitHub Wiki-style set of documents that live in the repo so the
 - [Indexer ↔ Database Sync Flow](./indexer-sync-flow.md)
 - [Frontend “Standard Library” Patterns](./frontend-patterns.md)
 
+- [Soroban Contract Reference](../contracts-reference.md) — Public functions, emitted events, error codes, and storage keys for all four contracts.
