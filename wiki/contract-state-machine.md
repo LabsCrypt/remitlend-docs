@@ -31,17 +31,17 @@ pub enum LoanStatus {
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Pending      : request_loan()\n📢 LoanRequested
-    Pending --> Approved : approve_loan()\n📢 LoanApproved
-    Pending --> Cancelled: cancel_loan()\n📢 LoanCancelled
-    Pending --> Rejected : reject_loan()\n📢 LoanRejected
+    [*] --> Pending      : request_loan()<br/>📢 LoanRequested
+    Pending --> Approved : approve_loan()<br/>📢 LoanApproved
+    Pending --> Cancelled: cancel_loan()<br/>📢 LoanCancelled
+    Pending --> Rejected : reject_loan()<br/>📢 LoanRejected
 
-    Approved --> Approved  : repay() partial\n📢 LoanRepaid
-    Approved --> Approved  : extend_loan()\n📢 LoanExtended
-    Approved --> Approved  : refinance_loan()\n📢 LoanRefinanced
-    Approved --> Repaid    : repay() full\n📢 LoanRepaid
-    Approved --> Defaulted : check_default() / check_defaults()\n📢 LoanDefaulted
-    Approved --> Liquidated: liquidate()\n📢 LoanLiquidated
+    Approved --> Approved  : repay() partial<br/>📢 LoanRepaid
+    Approved --> Approved  : extend_loan()<br/>📢 LoanExtended
+    Approved --> Approved  : refinance_loan()<br/>📢 LoanRefinanced
+    Approved --> Repaid    : repay() full<br/>📢 LoanRepaid
+    Approved --> Defaulted : check_default() / check_defaults()<br/>📢 LoanDefaulted
+    Approved --> Liquidated: liquidate()<br/>📢 LoanLiquidated
 
     Repaid    --> [*]
     Defaulted --> [*]
@@ -136,7 +136,7 @@ Partial repayments (`amount < total_debt`) leave the loan in `Approved` and also
 | Paused gate | Yes |
 | Pre-conditions | Loan must be `Approved`; collateral ratio below `LiquidationThresholdBps` |
 | Side-effects | Applies proportional debt recovery from collateral; sends debt portion to `LendingPool`; sends bonus to liquidator; refunds surplus collateral to borrower; decrements `BorrowerLoanCount` |
-| Events emitted | `LoanLiquidated(loan_id, borrower, liquidator, debt_repaid, bonus, refund)`, `CollateralLiquidated` |
+| Event emitted | `LoanLiquidated(loan_id, borrower, liquidator, debt_repaid, bonus, refund)` |
 
 ---
 
@@ -206,6 +206,8 @@ Admin functions `pause()` and `unpause()` emit `Paused` / `Unpaused` events.
 | `term_ledgers` | `u32` | |
 
 ### Key instance-level config keys
+
+> **Note:** values below are the contract defaults. Admins can override each via the corresponding setter function.
 
 | Key | Default |
 |-----|---------|
