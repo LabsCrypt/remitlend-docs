@@ -2,6 +2,8 @@
 
 This document details the state management and lifecycle of loans within the Remitlend Soroban smart contracts.
 
+> For a full reference of each contract's public functions, emitted events, error codes, and storage keys, see **[contracts-reference.md](../contracts-reference.md)**.
+
 ## Overview
 
 The core logic of Remitlend resides in two primary contracts:
