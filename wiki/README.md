@@ -11,6 +11,7 @@ This folder contains a GitHub‑Wiki‑style collection of technical documents t
 | [contract-state-machine.md](./contract-state-machine.md) | Soroban contract state‑machine diagram and description |
 | [indexer-sync-flow.md](./indexer-sync-flow.md) | Data sync flow between the indexer and the database |
 | [frontend-patterns.md](./frontend-patterns.md) | Common frontend patterns and "standard library" components |
+| [../runbook.md](../runbook.md) | Operations runbook: env vars, staging deploy, healthchecks, rollback, and troubleshooting |
 
 ---
 
