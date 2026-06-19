@@ -20,6 +20,7 @@ This repository houses the **design and technical documentation** for the RemitL
 | [wiki/indexer-sync-flow.md](./wiki/indexer-sync-flow.md) | Flow of data syncing between the indexer and the database |
 | [wiki/frontend-patterns.md](./wiki/frontend-patterns.md) | Common frontend patterns and "standard library" components |
 | [runbook.md](./runbook.md) | Operations runbook: env vars, staging deploy, healthchecks, rollback, and troubleshooting |
+| [api-reference.md](./api-reference.md) | REST API reference: endpoints, schemas, auth, errors, rate limits, and idempotency |
 
 ## Contributing
 If you’d like to add or improve documentation, start by reading our **contribution guide**: [CONTRIBUTING.md](./CONTRIBUTING.md).
