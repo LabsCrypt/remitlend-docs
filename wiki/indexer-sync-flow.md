@@ -20,7 +20,7 @@ sequenceDiagram
         Indexer->>DB: Get last_indexed_ledger
         DB-->>Indexer: 123456
         
-        Indexer->>RPC: getEvents({ startLedger: 123456, cursor, ... })
+        Indexer->>RPC: getEvents({ startLedger: 123457, ... })
         RPC-->>Indexer: [Event1, Event2, ...]
         
         Indexer->>Indexer: Decode XDR Topics & Value
@@ -30,7 +30,7 @@ sequenceDiagram
             DB-->>Indexer: Success
             Indexer->>Webhook: Dispatch LoanRequested payload
         else Event is LoanRepaid
-            Indexer->>DB: UPDATE user_score (+15 points (configurable, default +15))
+            Indexer->>DB: UPDATE user_score (+15 points (configurable via getScoreConfig().repaymentDelta))
             DB-->>Indexer: Success
             Indexer->>Webhook: Dispatch LoanRepaid payload
             Indexer->>Notifier: Send User Notification
