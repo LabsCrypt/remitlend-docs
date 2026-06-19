@@ -8,20 +8,19 @@ This document outlines the core tables, views, and indexes used in the Remitlend
 | :--- | :--- | :--- |
 | **`loans`** | Stores the state and history of active/past loans. | `id`, `borrower_address`, `amount`, `status`, `created_at` |
 | **`contract_events`** | Stores raw decoded events directly from the Soroban contract. | `event_id`, `tx_hash`, `topic`, `value`, `created_at` |
-| **`scores`** | Maintains the current credit score for each user. | `user_address`, `score`, `updated_at` |
-| **`webhook_subscriptions`** | User-configured webhooks for external integrations. | `id`, `user_address`, `url`, `event_types` |
-| **`deliveries`** | Logs of webhook payload delivery attempts. | `id`, `subscription_id`, `status`, `response_code` |
-| **`notifications`** | In-app alerts and notifications for users. | `id`, `user_address`, `message`, `read_status` |
-| **`audit_logs`** | Immutable log of critical off-chain system actions. | `id`, `action`, `actor`, `timestamp` |
-| **`idempotency`** | Prevents double processing of API requests or webhook retries. | `idempotency_key`, `response_body`, `created_at` |
+| **`scores`** | Maintains the current credit score for each user. | `borrower`, `score`, `updated_at`, `created_at` |
+| **`webhook_subscriptions`** | User-configured webhooks for external integrations. | `id`, `user_address`, `callback_url`, `event_types` |
+| **`webhook_deliveries`** | Logs of webhook payload delivery attempts. | `id`, `subscription_id`, `last_status_code` |
+| **`notifications`** | In-app alerts and notifications for users. | `id`, `user_address`, `message`, `read`, `status` |
+| **`audit_logs`** | Immutable log of critical off-chain system actions. | `id`, `action`, `actor`, `created_at` |
 | **`indexer_state`** | Tracks the current ledger synchronization point. | `last_indexed_ledger`, `last_indexed_cursor` |
 
 ## Important Indexes & Views
 
 ### Indexes
 To support high-performance queries and real-time indexing, several important indexes are maintained:
-- **`scores(user_address)`**: Enables fast O(1) lookups of a user's credit score during API requests and dashboard loads.
-- **`contract_events(event_id)`**: A unique index that acts as an idempotency constraint (`ON CONFLICT DO NOTHING`), preventing duplicate event processing.
+- **`scores(borrower)`**: Enables fast O(1) lookups of a user's credit score during API requests and dashboard loads.
+- **`contract_events(event_id)`** & **`(loan_id, event_type, ledger)`**: Unique constraints that act as idempotency constraints (`ON CONFLICT DO NOTHING`), preventing duplicate event processing. (Note: API request idempotency is handled via Redis cacheService).
 - **`webhook_subscriptions(event_types)`**: Allows efficient fan-out of webhook payloads when specific events occur.
 
 ### The Unified `loan_events` View
