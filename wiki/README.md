@@ -1,11 +1,17 @@
 # Contributor Wiki (In-Repo)
 
-This folder is a GitHub Wiki-style set of documents that live in the repo so they can be reviewed via PRs.
+This folder contains a GitHub‑Wiki‑style collection of technical documents that live in the repository so they can be reviewed via PRs.
 
-**Before contributing, please read [CONTRIBUTING.md](../CONTRIBUTING.md)** for style guidelines, templates, and PR expectations.
+**Before contributing, please read the [CONTRIBUTING.md](../CONTRIBUTING.md) guide** for style guidelines, templates, and PR expectations.
 
-## Contents
+## Wiki Contents
 
-- [Soroban Contract State Machine](./contract-state-machine.md)
-- [Indexer ↔ Database Sync Flow](./indexer-sync-flow.md)
-- [Frontend “Standard Library” Patterns](./frontend-patterns.md)
+| Document | Summary |
+|----------|---------|
+| [contract-state-machine.md](./contract-state-machine.md) | Soroban contract state‑machine diagram and description |
+| [indexer-sync-flow.md](./indexer-sync-flow.md) | Data sync flow between the indexer and the database |
+| [frontend-patterns.md](./frontend-patterns.md) | Common frontend patterns and "standard library" components |
+
+---
+
+> **Note**: Keep all links relative so they work on GitHub.
