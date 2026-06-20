@@ -1,64 +1,51 @@
 # RemitLend Operations Runbook
 
-This runbook is the single source of truth for operators running or deploying RemitLend. It covers environment variables, staging deployments, local development, and common troubleshooting.
+Single source of truth for running and deploying RemitLend. Accuracy is prioritized over breadth; everything below is grounded against the actual `remitlend-backend`, `remitlend-frontend`, and `remitlend-contracts` repositories.
 
 ---
 
 ## 1. Environment Variables
 
-Environment variables are organized by service. All URLs and secrets must be provided as strings.
+Copy `remitlend-backend/.env.example` to `.env` and fill in values. All secrets must be strings.
 
-### 1.1 API / Backend Service
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `PORT` | No | `3000` | HTTP listen port for the API server. |
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string (`postgres://user:pass@host:5432/dbname`). |
-| `REDIS_URL` | No | `redis://localhost:6379` | Redis connection string for caching and rate limiting. |
-| `STELLAR_RPC_URL` | Yes | — | Stellar Soroban RPC endpoint (e.g., `https://soroban-rpc.stellar.org`). |
-| `STELLAR_NETWORK_PASSPHRASE` | Yes | — | Stellar network passphrase (`Test SDF Network ; September 2015` or `Public Global Stellar Network ; September 2015`). |
-| `CONTRACT_ID` | Yes | — | Deployed Soroban `loan_manager` contract ID. |
-| `INTERNAL_API_KEY` | Yes | — | Shared secret for internal service-to-service authentication. Set a strong random 32+ char string. |
-| `WEBHOOK_SECRET` | No | — | HMAC secret for signing outgoing webhook payloads. |
-| `JWT_SECRET` | Yes | — | Secret used to sign and verify JWTs for user sessions. |
-| `WEBHOOK_TIMEOUT_MS` | No | `5000` | Timeout for outbound webhook HTTP calls. |
-
-### 1.2 Event Indexer Service
+### 1.1 remitlend-backend
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | — | Alias into the same PostgreSQL instance managed by the backend API. |
-| `STELLAR_RPC_URL` | Yes | — | Soroban RPC endpoint for ledger polling. |
-| `STELLAR_NETWORK_PASSPHRASE` | Yes | — | Must match the backend service. |
-| `INDEXER_POLL_INTERVAL_MS` | No | `30000` | Milliseconds between RPC poll cycles. Tune based on ledger throughput (every 5–30s is typical). |
-| `MAX_EVENTS_PER_POLL` | No | `200` | Upper bound on events fetched per RPC call to avoid timeouts. |
+| `DATABASE_URL` | Yes | | PostgreSQL connection string (`postgres://user:pass@host:5432/dbname`). |
+| `REDIS_URL` | No | `redis://localhost:6379` | Redis connection for caching and rate limiting. |
+| `STELLAR_RPC_URL` | Yes | | Soroban RPC endpoint. |
+| `STELLAR_NETWORK` | Yes | | Network identifier (`testnet` or `public`). |
+| `LOAN_MANAGER_CONTRACT_ID` | Yes | | `loan_manager` contract ID. |
+| `LENDING_POOL_CONTRACT_ID` | Yes | | `lending_pool` contract ID. |
+| `REMITTANCE_NFT_CONTRACT_ID` | Yes | | `remittance_nft` contract ID. |
+| `MULTISIG_GOVERNANCE_CONTRACT_ID` | Yes | | `multisig_governance` contract ID. |
+| `INTERNAL_API_KEY` | Yes | | Shared secret for internal service-to-service auth; passed via `x-api-key` header. |
+| `JWT_SECRET` | Yes | | Secret used to sign/verify JWTs. |
+| `WEBHOOK_REQUEST_TIMEOUT_MS` | No | `5000` | Timeout for outbound webhook HTTP calls. |
+| `SENDGRID_API_KEY` | Yes | | SendGrid API key for email. |
+| `FROM_EMAIL` | Yes | | Sender address for user-facing email. |
+| `ADMIN_EMAIL` | Yes | | Admin address for operational alerts. |
+| `TWILIO_ACCOUNT_SID` | Yes | | Twilio account SID for SMS. |
+| `TWILIO_AUTH_TOKEN` | Yes | | Twilio auth token. |
+| `TWILIO_PHONE_NUMBER` | Yes | | Outbound Twilio phone number. |
+| `PORT` | No | `3000` | HTTP listen port. |
+| `INDEXER_POLL_INTERVAL_MS` | No | `30000` | Milliseconds between RPC poll cycles. |
+| `INDEXER_BATCH_SIZE` | No | `200` | Upper bound on events fetched per RPC call. |
 
-### 1.3 Notification Service
+### 1.2 remitlend-frontend
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `PORT` | No | `4000` | HTTP listen port. |
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string. |
-| `REDIS_URL` | No | `redis://localhost:6379` | Redis connection for queueing. |
-| `SMTP_HOST` | Yes | — | Outbound mail server hostname. |
-| `SMTP_PORT` | Yes | — | Outbound mail server port (usually `587` for TLS, `465` for SSL). |
-| `SMTP_USER` | Yes | — | SMTP authentication username. |
-| `SMTP_PASS` | Yes | — | SMTP authentication password or app-specific token. |
-| `FROM_EMAIL` | Yes | — | Sender address seen by end users (e.g., `noreply@remitlend.com`). |
+| `NEXT_PUBLIC_API_URL` | Yes | | Public-facing API base URL. |
+| `NEXT_PUBLIC_STELLAR_NETWORK` | Yes | | `"testnet"` or `"public"`; controls wallet/Horizon URLs. |
 
-### 1.4 Frontend (Next.js)
+### 1.3 Startup Validation
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | Yes | — | Public-facing API base URL (e.g., `https://api-staging.remitlend.com`). |
-| `NEXT_PUBLIC_STELLAR_NETWORK` | Yes | — | `"testnet"` or `"public"` — controls which Horizon/RPC URLs the wallet uses. |
-
-### 1.5 Startup Validation
-
-Services should fail fast on missing mandatory variables. If you see a startup log like:
+Services fail fast on missing mandatory variables. If you see:
 
 ```
-FATAL: DATABASE_URL is required
+Missing required env: DATABASE_URL
 ```
 
 set the variable before restarting.
@@ -69,16 +56,15 @@ set the variable before restarting.
 
 ### 2.1 Prerequisites
 
-- Node.js 20+ and pnpm
+- Node.js 20+
 - PostgreSQL 15+
 - Redis 7+
-- Docker and Docker Compose
-- Stellar CLI (optional, for contract inspection)
+- npm (project uses npm, not pnpm)
 
 ### 2.2 Database and Redis
 
 ```bash
-# Start PostgreSQL (Homebrew example; use your OS package manager)
+# Start PostgreSQL
 brew services start postgresql@15
 
 # Start Redis
@@ -90,132 +76,73 @@ createdb remitlend_dev
 
 ### 2.3 Running Migrations
 
-Migrations live in `backend/src/db/migrations/` and use a migration runner script.
+Migrations live in `migrations/` at the `remitlend-backend` repo root. State is tracked by `node-pg-migrate` in a `pgmigrations` table.
 
 ```bash
-cd backend
+cd remitlend-backend
 
 # Install dependencies
-pnpm install
+npm install
 
 # Run pending migrations
-pnpm migrate
+npm run migrate
 
-# Verify by connecting to the DB
-psql $DATABASE_URL -c "SELECT * FROM schema_migrations LIMIT 5;"
+# Verify
+psql $DATABASE_URL -c "SELECT * FROM pgmigrations LIMIT 5;"
 ```
 
-If the `schema_migrations` table does not exist, the migration runner will create it on first run.
+`node-pg-migrate` creates the `pgmigrations` table on first run if it does not exist.
 
 ### 2.4 Environment File
 
-Create a `.env` in the backend root by copying `.env.example`:
-
 ```bash
-cp backend/.env.example backend/.env
-# Fill in STELLAR_RPC_URL, CONTRACT_ID, JWT_SECRET, etc.
+cp .env.example .env
+# Fill in STELLAR_RPC_URL, all four *_CONTRACT_ID values, JWT_SECRET, etc.
 ```
 
 Common pitfalls:
-- `STELLAR_RPC_URL` must point to a Soroban-capable RPC node (plain Horizon endpoints will not work for contract events).
-- `CONTRACT_ID` should be the **Soroban contract ID** (hex + base32), not the classic operation hash.
+- `STELLAR_RPC_URL` must be a Soroban-capable RPC node; plain Horizon endpoints will not work.
+- Each `*_CONTRACT_ID` must be the Soroban contract ID (hex + base32), not a classic operation hash.
 
 ### 2.5 Starting Services
 
+The backend repo contains the API server, event indexer, and notification logic. There are no separate `notifier/` or `indexer/` directories or repos.
+
 ```bash
-# Terminal 1 — API server
-cd backend && pnpm dev
+# Terminal 1 — Backend (API + indexer + notifications)
+cd remitlend-backend && npm run dev
 
-# Terminal 2 — Event indexer
-cd backend && pnpm dev:indexer
-
-# Terminal 3 — Notification service
-cd notifier && pnpm dev
-
-# Terminal 4 — Frontend
-cd frontend && pnpm dev
+# Terminal 2 — Frontend
+cd remitlend-frontend && npm run dev
 ```
 
 ---
 
 ## 3. Staging Deployment
 
-### 3.1 Overview
+### 3.1 Current State
 
-Staging deploys are triggered by merging to `main`. A GitHub Actions workflow builds Docker images, scans them with Trivy, pushes to the staging container registry, deploys, performs healthchecks, and can roll back automatically on failure.
+Staging is deployed manually today. The pipeline below is a **proposed target setup** and is not yet implemented.
 
-### 3.2 Image Build and Registry
+### 3.2 Proposed Target Setup
 
-Images are built with multi-stage Dockerfiles and pushed to:
-
-```
-registry.example.com/remitlend/<service>:<git-sha>-<semver>
-```
-
-Services:
-- `api`
-- `indexer`
-- `notifier`
-- `frontend`
-
-### 3.3 Deployment Steps
-
-1. **Push** — GitHub Actions builds images and pushes to the registry.
-2. **Trivy Scan** — Each image is scanned for critical and high-severity CVEs. The pipeline fails if uncritical vulnerabilities are above the policy threshold.
-3. **Deploy** — `kubectl apply` (or your orchestrator) deploys manifests that reference the newly pushed image tags.
-4. **Healthcheck** — A post-deploy script hits each service health endpoint:
-   - `GET https://api-staging.remitlend.com/health`
-   - `GET https://indexer-staging.remitlend.com/health`
-   - `GET https://notifier-staging.remitlend.com/health`
-5. **Smoke Tests** — A canary test suite verifies basic contract invocation and event ingestion.
-
-### 3.4 Rollback
-
-Rollbacks are manual but straightforward:
-
-```bash
-# 1. Identify the previous working image tag from the GitHub Actions run history
-# or the Kubernetes deployment history:
-kubectl rollout history deployment/api -n staging
-
-# 2. Roll back the deployment:
-kubectl rollout undo deployment/api -n staging
-kubectl rollout undo deployment/indexer -n staging
-kubectl rollout undo deployment/notifier -n staging
-
-# 3. Verify:
-kubectl rollout status deployment/api -n staging
-kubectl get pods -n staging -l app=api
-```
-
-If the database has a breaking migration, roll it back first:
-
-```bash
-kubectl exec -it <postgres-pod> -- psql $DATABASE_URL -c "SELECT * FROM schema_migrations;"
-# Identify the bad migration and revert the schema change manually.
-```
-
-### 3.5 Rollback Triggers
-
-Consider rolling back when:
-- Healthcheck fails for more than two consecutive minutes.
-- Outbox/webhook delivery failure rate exceeds 10%.
-- Error rate (5xx) on API exceeds 5%.
+1. **Push** — CI builds Docker images and pushes to a container registry.
+2. **Scan** — Trivy scans images for critical/high CVEs; pipeline fails above policy threshold.
+3. **Deploy** — Deploy manifests reference the newly pushed image tags.
+4. **Healthcheck** — Post-deploy script hits each service `/health` endpoint.
+5. **Rollback** — If healthchecks or smoke tests fail, roll back to the previous known-good tag.
 
 ---
 
 ## 4. Healthchecks
 
-Each service exposes a lightweight health endpoint.
-
 | Service | Endpoint | Checks |
 |---------|----------|--------|
 | API | `/health` | DB connectivity, RPC connectivity, contract reachability |
-| Indexer | `/health` | DB connectivity, `last_indexed_ledger` recency (lag < 2 `POLL_INTERVAL` cycles) |
-| Notifier | `/health` | DB connectivity, SMTP connectivity |
+| Indexer (in-process) | `/health` | DB connectivity, `last_indexed_ledger` recency (lag < 2 `INDEXER_POLL_INTERVAL_MS` cycles) |
 | Frontend | `/api/health` | Build version, feature flags loaded |
 
-Example healthcheck response:
+Example response:
 
 ```json
 {
@@ -232,79 +159,89 @@ Example healthcheck response:
 
 ## 5. Troubleshooting
 
-### 5.1 Service crashes immediately with a DATABASE_URL error
+### 5.1 Service crashes immediately with a missing env var
 
-**Symptom:** `FATAL: DATABASE_URL is required` or `ECONNREFUSED` to PostgreSQL.
+**Symptom:** `Missing required env: ...` or `ECONNREFUSED` to PostgreSQL.
 
 **Fix:**
-- Confirm `DATABASE_URL` is set in the environment (local `.env` or K8s secret).
+- Confirm the variable is set (local `.env` or runtime config).
 - Verify PostgreSQL is running: `pg_isready -h <host>`.
-- Check firewall / VPC peering if DB is remote.
 
 ### 5.2 Indexer not ingesting events (lag grows)
 
-**Symptom:** `last_indexed_ledger` stops advancing, `indexer_state` table shows stale `updated_at`.
+**Symptom:** `last_indexed_ledger` stops advancing; `indexer_state` shows stale `updated_at`.
 
 **Fix:**
 - Check `STELLAR_RPC_URL` is reachable and not rate-limiting.
-- Look for Stellar RPC downtime or `getEvents` errors in indexer logs.
-- Verify `CONTRACT_ID` is correct on the target network.
-- Increase `INDEXER_POLL_INTERVAL_MS` if the RPC node is timing out under load.
-- Check the `contract_events` table for constraint violations that might block inserts.
+- Look for RPC downtime or `getEvents` errors in backend logs.
+- Verify the correct `*_CONTRACT_ID` values for the target network.
+- Increase `INDEXER_POLL_INTERVAL_MS` if the RPC node is timing out.
 
 ### 5.3 500 errors on API after deploy
 
 **Symptom:** `5xx` rate spike post-deploy.
 
 **Fix:**
-- Check API logs for unhandled exceptions (missing env vars after a ConfigMap/secret change is a common cause).
-- Verify the database schema matches the code version (run migrations).
-- If the deploy is recent, check for breaking contract changes — the frontend and backend must target the same `CONTRACT_ID`.
+- Check logs for missing env vars or unhandled exceptions.
+- Verify schema matches code version: `npm run migrate`.
+- If recent, check for breaking contract ID mismatches between frontend and backend.
 
-### 5.4 Outbound webhooks failing
+### 5.4 Outbound webhooks / email / SMS failing
 
-**Symptom:** `webhook_deliveries` table shows consecutive `5xx` or timeout status codes.
+**Symptom:** Webhook delivery failures, or SendGrid / Twilio errors in logs.
 
 **Fix:**
-- Verify outbound network egress is not blocked by a firewall or WAF.
-- Increase `WEBHOOK_TIMEOUT_MS` if the downstream service is slow.
-- Check that `WEBHOOK_SECRET` matches what the consumer expects (rotated secrets break HMAC verification).
+- Verify outbound egress is not blocked.
+- Increase `WEBHOOK_REQUEST_TIMEOUT_MS` if the downstream service is slow.
+- Confirm `SENDGRID_API_KEY`, `TWILIO_ACCOUNT_SID`, and `TWILIO_AUTH_TOKEN` are current.
 
 ### 5.5 Frontend shows stale data or wallet errors
 
-**Symptom:** Old balances, or the wallet connector says "network mismatch."
+**Symptom:** Old balances, or wallet connector says "network mismatch."
 
 **Fix:**
-- Ensure `NEXT_PUBLIC_STELLAR_NETWORK` matches the deployed backend network.
-- Clear the browser cache and local storage (wallet keypair caches network config).
-- Verify the RPC URL is not returning cached ledgers (use a dedicated RPC node rather than a heavily cached public endpoint).
+- Ensure `NEXT_PUBLIC_STELLAR_NETWORK` matches the backend network.
+- Clear browser cache and local storage (wallet keypairs cache network config).
+- Verify the RPC node is not returning stale/cached ledgers.
 
 ### 5.6 PostgreSQL connection pool exhaustion
 
-**Symptom:** `too many connections for role "remitlend"` or `remaining connection slots are reserved`.
+**Symptom:** `too many connections for role "remitlend"`.
 
 **Fix:**
-- Check connection pool settings in `backend/src/db/connection.js` and the notifier config.
-- Enable PgBouncer if running many service replicas.
-- Reduce `MAX_EVENTS_PER_POLL` or `INDEXER_POLL_INTERVAL_MS` to lower query volume on the indexer.
+- Check backend DB connection pool settings.
+- Enable PgBouncer if running many replicas.
+- Reduce `INDEXER_BATCH_SIZE` or `INDEXER_POLL_INTERVAL_MS` to lower indexer query volume.
 
 ---
 
 ## 6. Useful Commands
 
 ```bash
-# Check PostgreSQL replication lag
-psql $DATABASE_URL -c "SELECT now() - pg_last_xact_replay_timestamp() AS replication_lag;"
+# Install backend deps
+cd remitlend-backend && npm install
 
-# Check Redis connectivity
+# Run migrations
+cd remitlend-backend && npm run migrate
+
+# Start backend dev server
+cd remitlend-backend && npm run dev
+
+# Start frontend dev server
+cd remitlend-frontend && npm run dev
+
+# Check PostgreSQL
+pg_isready -h <host>
+
+# Check Redis
 redis-cli ping
 
-# Inspect the last 20 indexer events
+# Inspect indexer events
 psql $DATABASE_URL -c "SELECT * FROM contract_events ORDER BY created_at DESC LIMIT 20;"
 
-# Inspect failed webhook deliveries
+# Inspect failed webhooks
 psql $DATABASE_URL -c "SELECT * FROM webhook_deliveries WHERE last_status_code >= 400 ORDER BY created_at DESC LIMIT 20;"
 
-# Roll back a Kubernetes deployment
-kubectl rollout undo deployment/<service> -n staging
+# View migration history
+psql $DATABASE_URL -c "SELECT * FROM pgmigrations ORDER BY run_on DESC LIMIT 10;"
 ```
