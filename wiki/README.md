@@ -6,11 +6,12 @@ This folder contains a GitHub‑Wiki‑style collection of technical documents t
 
 ## Wiki Contents
 
-| Document | Summary |
-|----------|---------|
-| [contract-state-machine.md](./contract-state-machine.md) | Soroban contract state‑machine diagram and description |
-| [indexer-sync-flow.md](./indexer-sync-flow.md) | Data sync flow between the indexer and the database |
-| [frontend-patterns.md](./frontend-patterns.md) | Common frontend patterns and "standard library" components |
+| Document                                                 | Summary                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------- |
+| [architecture.md](./architecture.md)                     | System architecture overview with component diagrams and data flows |
+| [contract-state-machine.md](./contract-state-machine.md) | Soroban contract state‑machine diagram and description              |
+| [indexer-sync-flow.md](./indexer-sync-flow.md)           | Data sync flow between the indexer and the database                 |
+| [frontend-patterns.md](./frontend-patterns.md)           | Common frontend patterns and "standard library" components          |
 
 ---
 
